@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,13 +11,18 @@ import (
 )
 
 var (
-	query        = flag.String("query", "弾いてみた", "Search term")
-	maxResults   = flag.Int64("max-results", 25, "Max YouTube results")
+	maxResults   = 25
 	developerKey = os.Getenv("YOUTUBE_API_KEY")
 )
 
 func main() {
-	flag.Parse()
+	getVideos("ギター")
+	getVideos("ベース")
+	getVideos("ドラム")
+	getVideos("キーボード")
+}
+
+func getVideos(instrument string) {
 
 	client := &http.Client{
 		Transport: &transport.APIKey{Key: developerKey},
@@ -29,10 +33,12 @@ func main() {
 		log.Fatalf("Error creating new YouTube client: %v", err)
 	}
 
+	query := "弾いてみた " + instrument
+
 	// Make the API call to YouTube.
 	call := service.Search.List("id,snippet").
-		Q(*query).
-		MaxResults(*maxResults)
+		Q(query).
+		MaxResults(int64(maxResults))
 	response, err := call.Do()
 	if err != nil {
 		log.Fatalf("Error making search API call: %v", err)
@@ -48,15 +54,17 @@ func main() {
 		}
 	}
 
-	printIDs(videos)
+	printIDs(instrument, videos)
 }
 
 // Print the ID and title of each result in a list as well as a name that
 // identifies the list. For example, print the word section name "Videos"
 // above a list of video search results, followed by the video ID and title
 // of each matching video.
-func printIDs(matches map[string]string) {
+func printIDs(instrument string, matches map[string]string) {
+	fmt.Printf("%v\n", instrument)
 	for id, title := range matches {
 		fmt.Printf("[%v] %v\n", id, title)
 	}
+	fmt.Print("\n\n")
 }
